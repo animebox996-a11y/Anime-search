@@ -88,17 +88,101 @@ h1 {
 const API_URL = "https://script.google.com/macros/s/AKfycbyQc9-QbVYqXWg0j8ztrIIp6_bXd-0-OtL6gSlTvtvjVAemaMeqpkdQygzyoNiRHRY/exec";
 
 let animeList = [];
+let dataLoaded = false;
 
-// Get anime from Google Sheet
-fetch(API_URL)
-  .then(response => response.json())
-  .then(data => {
-    animeList = data;
-  })
-  .catch(error => {
-    document.getElementById("message").textContent =
-      "Unable to load anime database.";
-    console.error(error);
+// This receives the anime data from Google Apps Script
+function loadAnimeData(data) {
+
+  animeList = data;
+  dataLoaded = true;
+
+  console.log("Anime database loaded:", animeList.length);
+}
+
+// Load anime database
+const script = document.createElement("script");
+
+script.src =
+  API_URL +
+  "?callback=loadAnimeData&_=" +
+  Date.now();
+
+script.onerror = function() {
+
+  document.getElementById("message").textContent =
+    "Unable to load anime database.";
+
+};
+
+document.body.appendChild(script);
+
+
+// Search
+const searchBox = document.getElementById("search");
+const results = document.getElementById("results");
+const message = document.getElementById("message");
+
+searchBox.addEventListener("input", function() {
+
+  const query = this.value.trim().toLowerCase();
+
+  results.innerHTML = "";
+  message.textContent = "";
+
+  // Empty search = no results
+  if (!query) return;
+
+  // Database still loading
+  if (!dataLoaded) {
+
+    message.textContent =
+      "Loading anime database...";
+
+    return;
+  }
+
+  // Find matching anime
+  const matches = animeList.filter(anime =>
+    anime.name.toLowerCase().includes(query)
+  );
+
+  // No matches
+  if (matches.length === 0) {
+
+    message.textContent =
+      "No button found";
+
+    return;
+  }
+
+  // Create buttons
+  matches.forEach(anime => {
+
+    const button =
+      document.createElement("button");
+
+    button.className = "result";
+
+    button.textContent =
+      anime.name;
+
+    button.onclick = function() {
+
+      window.open(
+        anime.url,
+        "_blank"
+      );
+
+    };
+
+    results.appendChild(button);
+
   });
 
-const searchBox = document.getElementBy
+});
+
+</script>
+
+</body>
+</html>
+  
